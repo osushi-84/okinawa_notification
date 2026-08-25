@@ -14,7 +14,7 @@
 
 ## ユーザー側の次ステップ
 
-- [ ] 日別回数の合計21回を採用するか、記載上の合計20回を優先して1日分を1回減らすか決定
+- [x] 日別回数 `3 + 8 + 8 + 2` を優先し、合計21回で運用すると決定
 - [ ] Discord Webhookと対象ロールを作成
 - [ ] GitHub Actions Secrets `DISCORD_WEBHOOK_URL` / `DISCORD_ROLE_ID` を登録
 - [ ] GitHub ActionsへRead and write permissionsを付与

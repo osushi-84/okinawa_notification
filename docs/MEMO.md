@@ -11,3 +11,5 @@
 [codex] 完了時にPython構文確認、本番ファイル整合性検証、Secret形式の混入検査、pytestを実行。pytestは13件すべて成功した。
 
 [codex] GitHub上の `validate` 手動実行は成功。初回実行でNode.js 20非推奨の注記を検出したため、公式の現行メジャー版 `actions/checkout@v7` と `actions/setup-python@v7` へ更新した。
+
+[codex] ユーザー確認により、日別回数 `3 + 8 + 8 + 2` を優先した合計21回で本番運用することが確定した。生成済みスケジュールも21件のため再生成は不要。

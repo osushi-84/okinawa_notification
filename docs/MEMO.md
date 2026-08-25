@@ -9,3 +9,5 @@
 [codex] Discord Webhookは冪等性キーを提供しないため、Webhook成功直後からGit push成功前の強制終了時に限って二重送信の可能性が残る。通知欠落を避けるため、送信成功後にだけ状態を更新するat-least-once設計を採用した。
 
 [codex] 完了時にPython構文確認、本番ファイル整合性検証、Secret形式の混入検査、pytestを実行。pytestは13件すべて成功した。
+
+[codex] GitHub上の `validate` 手動実行は成功。初回実行でNode.js 20非推奨の注記を検出したため、公式の現行メジャー版 `actions/checkout@v7` と `actions/setup-python@v7` へ更新した。

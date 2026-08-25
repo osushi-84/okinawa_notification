@@ -54,6 +54,43 @@ jobs:
           DISCORD_ROLE_ID: ${{ secrets.DISCORD_ROLE_ID }}
         run: python -m trip_notify.webhook_test
 
+      - name: 23:00の1回限り予定実行テスト
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'process_due')
+        shell: bash
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ROLE_ID: ${{ secrets.DISCORD_ROLE_ID }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          python -m trip_notify.send_due \
+            --schedule data/one_time_test_schedule.json \
+            --state data/one_time_test_state.json \
+            --template config/one_time_test_message.txt \
+            --max-notifications 1
+
+          if ! git diff --quiet -- data/one_time_test_state.json; then
+            git add data/one_time_test_state.json
+            git commit -m "[github] 23時テスト通知の送信状態を更新"
+
+            pushed=false
+            for attempt in 1 2 3; do
+              if git pull --rebase origin "$STATE_BRANCH" && git push origin "HEAD:$STATE_BRANCH"; then
+                pushed=true
+                break
+              fi
+              git rebase --abort 2>/dev/null || true
+              echo "テスト状態のpushに失敗しました。再試行: $attempt / 3"
+              sleep 2
+            done
+            if [[ "$pushed" != "true" ]]; then
+              echo "ERROR: テスト送信状態をpushできませんでした。"
+              exit 1
+            fi
+          fi
+
       - name: 期限到来済み通知を送信して状態を保存
         if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'process_due')
         shell: bash

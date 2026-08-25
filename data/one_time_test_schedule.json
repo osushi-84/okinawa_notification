@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "timezone": "Asia/Tokyo",
+  "test_schedule": true,
+  "notifications": [
+    {
+      "id": "one-time-test-20260825-2300",
+      "scheduled_at": "2026-08-25T23:00:00+09:00",
+      "overall_index": 1,
+      "overall_total": 1,
+      "daily_index": 1,
+      "daily_total": 1
+    }
+  ]
+}

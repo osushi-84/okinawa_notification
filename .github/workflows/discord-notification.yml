@@ -1,0 +1,105 @@
+name: Discord旅行通知
+
+on:
+  schedule:
+    # GitHub ActionsのcronはUTC。実際の送信可否はPython側がAsia/Tokyoで判定する。
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "実行モード"
+        required: true
+        default: "validate"
+        type: choice
+        options:
+          - validate
+          - webhook_test
+          - process_due
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: discord-trip-notification
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PYTHONPATH: src
+      STATE_BRANCH: ${{ github.event.repository.default_branch }}
+
+    steps:
+      - name: デフォルトブランチを取得
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+
+      - name: Pythonをセットアップ
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 本番ファイルを検証
+        run: python -m trip_notify.validate
+
+      - name: Webhookを手動テスト
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'webhook_test'
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ROLE_ID: ${{ secrets.DISCORD_ROLE_ID }}
+        run: python -m trip_notify.webhook_test
+
+      - name: 期限到来済み通知を送信して状態を保存
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'process_due')
+        shell: bash
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_ROLE_ID: ${{ secrets.DISCORD_ROLE_ID }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          while true; do
+            python -m trip_notify.send_due --max-notifications 1
+
+            if git diff --quiet -- data/notification_state.json; then
+              break
+            fi
+
+            git add data/notification_state.json
+            git commit -m "[github] Discord通知の送信状態を更新"
+
+            pushed=false
+            for attempt in 1 2 3; do
+              if git pull --rebase origin "$STATE_BRANCH" && git push origin "HEAD:$STATE_BRANCH"; then
+                pushed=true
+                break
+              fi
+              git rebase --abort 2>/dev/null || true
+              echo "状態のpushに失敗しました。再試行: $attempt / 3"
+              sleep 2
+            done
+            if [[ "$pushed" != "true" ]]; then
+              echo "ERROR: 送信状態をpushできませんでした。"
+              exit 1
+            fi
+          done
+
+      - name: 全送信完了後に定期実行を停止
+        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'process_due')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if python -m trip_notify.is_complete; then
+            gh workflow disable discord-notification.yml
+            echo "全件送信済みのため、5分間隔のworkflowを自動停止しました。"
+          else
+            echo "未送信の通知があるため、定期実行を継続します。"
+          fi

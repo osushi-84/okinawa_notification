@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "timezone": "Asia/Tokyo",
+  "slot_minutes": 5,
+  "minimum_interval_minutes": 45,
+  "days": [
+    {
+      "date": "2026-08-28",
+      "start": "17:00",
+      "end": "24:00",
+      "count": 3
+    },
+    {
+      "date": "2026-08-29",
+      "start": "07:00",
+      "end": "24:00",
+      "count": 8
+    },
+    {
+      "date": "2026-08-30",
+      "start": "07:00",
+      "end": "24:00",
+      "count": 8
+    },
+    {
+      "date": "2026-08-31",
+      "start": "07:00",
+      "end": "10:00",
+      "count": 2
+    }
+  ]
+}

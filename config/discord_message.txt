@@ -1,0 +1,5 @@
+{role_mention}
+📸 写真タイム！
+
+全体：{overall_index} / {overall_total}
+今日：{daily_index} / {daily_total}

@@ -1,5 +1,5 @@
 {role_mention}
-🌺 はいさい！写真タイムさ〜！📸
+📸 はいチーズ！
 
 全体：{overall_index} / {overall_total}
 今日：{daily_index} / {daily_total}
